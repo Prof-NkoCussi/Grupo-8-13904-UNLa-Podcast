@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Podcast TPACK — Grupo 8 · UNLa</title>
+<meta name="description" content="TPACK: enseñar con tecnología, pero con sentido. Podcast del Grupo 8 — Sociedad, Cultura, Educación y Tecnologías (UNLa).">
+<style>
+  @font-face{font-family:Manrope;font-weight:500;src:url(podcast/fonts/manrope-latin-500-normal.woff2) format('woff2')}
+  @font-face{font-family:Manrope;font-weight:700;src:url(podcast/fonts/manrope-latin-700-normal.woff2) format('woff2')}
+  @font-face{font-family:Manrope;font-weight:800;src:url(podcast/fonts/manrope-latin-800-normal.woff2) format('woff2')}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{min-height:100vh;background:linear-gradient(135deg,#0a1c33 0%,#122f52 55%,#0a1c33 100%);color:#f5f7fa;
+    font-family:Manrope,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:28px 16px 40px}
+  .wrap{width:100%;max-width:1100px}
+  header{margin-bottom:18px}
+  .kicker{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#0cc0df;font-weight:700}
+  h1{margin:6px 0 4px;font-size:clamp(22px,4vw,34px);font-weight:800;line-height:1.15}
+  .sub{font-size:15px;color:rgba(245,247,250,.7);font-weight:500}
+  .stage{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#0d2440;
+    box-shadow:0 20px 60px rgba(0,0,0,.45);border:1px solid rgba(12,192,223,.25)}
+  .stage iframe{position:absolute;left:0;top:0;width:1280px;height:720px;border:0;transform-origin:0 0;pointer-events:none}
+  .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(13,36,64,.35);
+    border:0;cursor:pointer;transition:opacity .3s}
+  .play span{width:clamp(64px,11vw,96px);height:clamp(64px,11vw,96px);border-radius:999px;background:#0cc0df;display:flex;
+    align-items:center;justify-content:center;box-shadow:0 0 0 10px rgba(12,192,223,.18),0 10px 30px rgba(0,0,0,.4)}
+  .play svg{width:42%;height:42%;margin-left:8%}
+  .play.hide{opacity:0;pointer-events:none}
+  .bar{display:flex;align-items:center;gap:12px;margin-top:14px}
+  .btn{flex:0 0 44px;height:44px;border-radius:999px;border:2px solid #0cc0df;background:rgba(12,192,223,.1);color:#0cc0df;
+    display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .btn svg{width:18px;height:18px}
+  input[type=range]{flex:1;accent-color:#0cc0df;height:24px}
+  .time{flex:0 0 auto;font-size:14px;font-variant-numeric:tabular-nums;color:rgba(245,247,250,.75);font-weight:700}
+  footer{margin-top:22px;font-size:13px;color:rgba(245,247,250,.55);line-height:1.6}
+  footer a{color:#7fe3f4}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Podcast · Grupo 8 · UNLa</div>
+    <h1>TPACK: enseñar con tecnología, pero con sentido</h1>
+    <div class="sub">Silvana Gandur · Nicolás A. Cussi · Rocío Belén Gómez · Maximiliano Garay</div>
+  </header>
+
+  <div class="stage" id="stage">
+    <iframe id="frame" src="podcast/podcast.html#t=12" title="Placas animadas del podcast" scrolling="no"></iframe>
+    <button class="play" id="big" aria-label="Reproducir el podcast">
+      <span><svg viewBox="0 0 24 24" fill="#0d2440"><path d="M6 4l14 8-14 8z"/></svg></span>
+    </button>
+  </div>
+
+  <div class="bar">
+    <button class="btn" id="toggle" aria-label="Reproducir o pausar">
+      <svg id="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8z"/></svg>
+    </button>
+    <input type="range" id="seek" min="0" max="195" step="0.1" value="0" aria-label="Posición">
+    <div class="time" id="time">0:00 / 3:15</div>
+  </div>
+
+  <audio id="audio" src="podcast/podcast.mp3" preload="auto"></audio>
+
+  <footer>
+    Licenciatura en Tecnologías Digitales para la Educación — UNLa · Sociedad, Cultura, Educación y Tecnologías.<br>
+    Podcast destinado a docentes sobre el modelo TPACK para integrar la tecnología en el aula.
+  </footer>
+</div>
+
+<script>
+(function () {
+  const END = 195;   // el audio original tiene ~7 s de silencio al final
+  const audio = document.getElementById('audio'), frame = document.getElementById('frame');
+  const stage = document.getElementById('stage'), big = document.getElementById('big');
+  const toggle = document.getElementById('toggle'), ico = document.getElementById('ico');
+  const seek = document.getElementById('seek'), time = document.getElementById('time');
+  const PLAY = 'M6 4l14 8-14 8z', PAUSE = 'M6 4h4v16H6zM14 4h4v16h-4z';
+  let started = false, dragging = false;
+
+  // Escalar el artboard de 1280x720 al ancho disponible
+  const fit = () => { frame.style.transform = 'scale(' + (stage.clientWidth / 1280) + ')'; };
+  new ResizeObserver(fit).observe(stage); fit();
+
+  const fmt = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+  const draw = t => { const w = frame.contentWindow; if (w && w.render) w.render(t); };
+
+  function tick() {
+    const t = Math.min(audio.currentTime, END);
+    if (started) draw(t);
+    if (!dragging) seek.value = t;
+    time.textContent = fmt(t) + ' / ' + fmt(END);
+    if (audio.currentTime >= END && !audio.paused) { audio.pause(); }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  function play() { started = true; big.classList.add('hide'); if (audio.currentTime >= END) audio.currentTime = 0; audio.play(); }
+  big.addEventListener('click', play);
+  toggle.addEventListener('click', () => audio.paused ? play() : audio.pause());
+  audio.addEventListener('play', () => ico.firstElementChild.setAttribute('d', PAUSE));
+  audio.addEventListener('pause', () => ico.firstElementChild.setAttribute('d', PLAY));
+  seek.addEventListener('input', () => { dragging = true; started = true; big.classList.add('hide'); audio.currentTime = +seek.value; draw(+seek.value); });
+  seek.addEventListener('change', () => { dragging = false; });
+  document.addEventListener('keydown', e => { if (e.code === 'Space' && e.target === document.body) { e.preventDefault(); audio.paused ? play() : audio.pause(); } });
+})();
+</script>
+</body>
+</html>
