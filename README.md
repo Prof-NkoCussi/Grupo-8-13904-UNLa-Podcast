@@ -5,12 +5,23 @@ Sociedad, Cultura, Educación y Tecnologías · Podcast (opción A: destinado a 
 
 Integrantes: Silvana Gandur · Nicolás A. Cussi · Rocío Belén Gómez · Maximiliano Garay
 
-Versión en video del podcast: dos placas animadas en HTML/CSS que se exportan
-como MP4 con el audio del grupo ya montado.
+## ▶️ [Escuchar y ver el podcast](https://prof-nkocussi.github.io/Grupo-8-13904-UNLa-Podcast/)
+
+**https://prof-nkocussi.github.io/Grupo-8-13904-UNLa-Podcast/**
+
+Se abre en el navegador (compu o celular): tocá play y las placas se animan
+sincronizadas con el audio. Duración: 3:15.
+
+---
+
+Versión en video del podcast: dos placas animadas en HTML/CSS que se reproducen
+en vivo con el audio del grupo, o se exportan como MP4 con el audio ya montado.
 
 ## Estructura
 
 ```
+├── index.html               ← reproductor (la página de GitHub Pages)
+├── CONTENIDO.md             ← guion completo, línea de tiempo y sistema visual
 ├── podcast/
 │   ├── podcast.html         ← las 2 placas (portada + modelo TPACK) con la línea de tiempo
 │   ├── podcast.mp3          ← audio editado del grupo (3:20)
