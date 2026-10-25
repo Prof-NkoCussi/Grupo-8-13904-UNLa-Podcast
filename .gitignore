@@ -1,0 +1,4 @@
+node_modules/
+podcast/export/
+*.mp4
+*.webm
